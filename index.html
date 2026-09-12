@@ -52,6 +52,10 @@
     .range-row { display: flex; align-items: center; gap: 12px; }
     input[type=range] { width: 100%; accent-color: var(--accent); }
     .speed { min-width: 82px; color: var(--accent); font-size: 11px; text-align: right; }
+    .speed-control { display: flex; align-items: center; gap: 9px; min-width: 190px; color: var(--muted); font-size: 11px; }
+    .speed-control input { width: 90px; }
+    .focus-close { position: absolute; top: 24px; right: 24px; z-index: 2; border: 1px solid var(--line); border-radius: 6px; color: var(--ink); background: rgba(7, 17, 20, .74); padding: 9px 12px; font-size: 12px; }
+    .focus-close:hover { border-color: var(--accent); background: var(--accent-soft); }
     .stepper { display: flex; gap: 6px; }
     .stepper button { border: 1px solid var(--line); border-radius: 5px; color: var(--muted); background: transparent; padding: 8px 10px; font-size: 11px; }
     .stepper button:hover { color: var(--ink); border-color: var(--accent); }
@@ -91,6 +95,8 @@
       .sim-overlay { inset: 18px 17px auto; }
       .view-toggle { display: none; }
       .control-dock { right: 14px; bottom: 14px; left: 14px; grid-template-columns: auto 1fr; gap: 12px; }
+      .speed-control { grid-column: 1 / -1; min-width: 0; }
+      .speed-control input { flex: 1; width: auto; }
       .stepper { grid-column: 1 / -1; justify-content: space-between; }
       .stepper button { flex: 1; }
       .sidebar { display: block; padding: 20px 17px; }
@@ -117,9 +123,11 @@
           <div class="view-toggle" aria-label="视图模式"><button class="active" data-view="top">俯视</button><button data-view="tilt">倾斜</button></div>
         </div>
         <div class="canvas-hint">滚轮缩放 · 拖动旋转 · 点击行星查看详情</div>
+        <button class="focus-close" id="focusClose" hidden>返回太阳系总览</button>
         <div class="control-dock">
           <button class="play-button" id="playButton" aria-label="播放动画" title="播放动画">▶</button>
           <div class="control-main"><div class="range-row"><input id="timeRange" type="range" min="-365" max="365" value="0" aria-label="模拟时间"><span class="speed" id="speedLabel">1 日 / 秒</span></div></div>
+          <label class="speed-control"><span>时间流速</span><input id="speedRange" type="range" min="0.25" max="20" step="0.25" value="1" aria-label="时间流速"><span id="speedValue">1×</span></label>
           <div class="stepper"><button id="backButton">− 30 日</button><button id="todayButton">今天</button><button id="forwardButton">+ 30 日</button></div>
         </div>
       </section>
@@ -154,7 +162,7 @@
     ];
     const canvas = document.getElementById('space');
     const ctx = canvas.getContext('2d');
-    const state = { day: 0, selected: 2, playing: false, view: 'top', showOrbits: true, showLabels: true, zoom: 1, rotation: 0 };
+    const state = { day: 0, selected: 2, playing: false, view: 'top', showOrbits: true, showLabels: true, zoom: 1, rotation: 0, speed: 1, focused: false, focusProgress: 0 };
     const startDate = new Date('2026-09-12T00:00:00Z');
     let lastFrame = performance.now();
 
@@ -172,32 +180,54 @@
     function draw() {
       const rect = canvas.getBoundingClientRect(); const dpr = window.devicePixelRatio || 1; const width = rect.width; const height = rect.height;
       if (canvas.width !== width * dpr || canvas.height !== height * dpr) { canvas.width = width * dpr; canvas.height = height * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
-      drawStars(width, height); const cx = width / 2; const cy = height / 2 + 20; const maxRadius = Math.min(width, height) * .39 * state.zoom; const scale = maxRadius / Math.sqrt(30.06);
+      drawStars(width, height); const cx = width / 2; const cy = height / 2 + 20; const maxRadius = Math.min(width, height) * .35 * state.zoom; const scale = maxRadius / Math.sqrt(30.06);
       ctx.save(); ctx.translate(cx, cy); ctx.rotate(state.rotation + (state.view === 'tilt' ? -.25 : 0));
-      if (state.showOrbits) planets.forEach(planet => { const radius = Math.sqrt(planet.a) * scale; ctx.beginPath(); ctx.ellipse(0, 0, radius, state.view === 'tilt' ? radius * .64 : radius, 0, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(165, 194, 183, .19)'; ctx.lineWidth = 1; ctx.stroke(); });
+      if (state.showOrbits) planets.forEach(planet => { const radius = Math.sqrt(planet.a) * scale; const isNeptune = planet.en === 'Neptune'; ctx.beginPath(); ctx.ellipse(0, 0, radius, state.view === 'tilt' ? radius * .64 : radius, 0, 0, Math.PI * 2); ctx.strokeStyle = isNeptune ? 'rgba(82, 127, 189, .72)' : 'rgba(165, 194, 183, .19)'; ctx.lineWidth = isNeptune ? 1.5 : 1; ctx.setLineDash(isNeptune ? [6, 5] : []); ctx.stroke(); ctx.setLineDash([]); if (isNeptune && state.showLabels) { ctx.fillStyle = 'rgba(143, 177, 225, .9)'; ctx.font = '10px DM Mono'; ctx.fillText('海王星轨道', radius - 65, state.view === 'tilt' ? -radius * .64 - 8 : -radius - 8); } });
       const sunGlow = ctx.createRadialGradient(0, 0, 3, 0, 0, 38); sunGlow.addColorStop(0, '#fff2bb'); sunGlow.addColorStop(1, 'rgba(242, 187, 103, 0)'); ctx.fillStyle = sunGlow; ctx.beginPath(); ctx.arc(0, 0, 38, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#f2bb67'; ctx.beginPath(); ctx.arc(0, 0, 9, 0, Math.PI * 2); ctx.fill();
-      planets.forEach((planet, index) => { const p = position(planet, state.day); const x = p.x / Math.sqrt(30.06) * maxRadius; const y = p.y / Math.sqrt(30.06) * maxRadius * (state.view === 'tilt' ? .64 : 1); const size = Math.max(3, Math.min(10, 3 + Math.log(planet.a + 1) * 2)); ctx.beginPath(); ctx.arc(x, y, size + (index === state.selected ? 4 : 0), 0, Math.PI * 2); ctx.strokeStyle = index === state.selected ? 'rgba(242, 187, 103, .8)' : 'transparent'; ctx.lineWidth = 1; ctx.stroke(); ctx.fillStyle = planet.color; ctx.beginPath(); ctx.arc(x, y, size, 0, Math.PI * 2); ctx.fill(); if (state.showLabels) { ctx.fillStyle = index === state.selected ? '#f4f1e8' : 'rgba(244,241,232,.65)'; ctx.font = '11px Manrope'; ctx.fillText(planet.name, x + size + 5, y + 4); } }); ctx.restore();
+      planets.forEach((planet, index) => { const p = position(planet, state.day); const angle = Math.atan2(p.y, p.x); const visualRadius = Math.sqrt(Math.hypot(p.x, p.y)) * scale; const x = Math.cos(angle) * visualRadius; const y = Math.sin(angle) * visualRadius * (state.view === 'tilt' ? .64 : 1); const size = Math.max(3, Math.min(10, 3 + Math.log(planet.a + 1) * 2)); ctx.beginPath(); ctx.arc(x, y, size + (index === state.selected ? 4 : 0), 0, Math.PI * 2); ctx.strokeStyle = index === state.selected ? 'rgba(242, 187, 103, .8)' : 'transparent'; ctx.lineWidth = 1; ctx.stroke(); ctx.fillStyle = planet.color; ctx.beginPath(); ctx.arc(x, y, size, 0, Math.PI * 2); ctx.fill(); if (state.showLabels) { ctx.fillStyle = index === state.selected ? '#f4f1e8' : 'rgba(244,241,232,.65)'; ctx.font = '11px Manrope'; ctx.fillText(planet.name, x + size + 5, y + 4); } }); ctx.restore();
+      if (state.focused || state.focusProgress > 0) drawFocusedPlanet(width, height);
       updateText();
     }
+    function drawFocusedPlanet(width, height) {
+      const planet = planets[state.selected]; const progress = state.focusProgress; const radius = Math.min(width, height) * (.13 + .2 * progress); const centerX = width * .58; const centerY = height * .43;
+      ctx.fillStyle = `rgba(3, 9, 11, ${.62 * progress})`; ctx.fillRect(0, 0, width, height);
+      if (planet.en === 'Saturn') { ctx.save(); ctx.translate(centerX, centerY); ctx.rotate(-.18); ctx.strokeStyle = 'rgba(220, 198, 143, .55)'; for (let ring = 1.15; ring <= 1.55; ring += .1) { ctx.beginPath(); ctx.ellipse(0, 0, radius * ring, radius * ring * .23, 0, 0, Math.PI * 2); ctx.lineWidth = Math.max(2, radius * .018); ctx.stroke(); } ctx.restore(); }
+      ctx.save(); ctx.beginPath(); ctx.arc(centerX, centerY, radius, 0, Math.PI * 2); ctx.clip();
+      const light = ctx.createRadialGradient(centerX - radius * .38, centerY - radius * .45, radius * .04, centerX + radius * .15, centerY + radius * .15, radius * 1.25); light.addColorStop(0, '#fff9df'); light.addColorStop(.16, planet.color); light.addColorStop(.68, planet.color); light.addColorStop(1, '#020608'); ctx.fillStyle = light; ctx.fillRect(centerX - radius, centerY - radius, radius * 2, radius * 2);
+      if (planet.en === 'Earth') {
+        ctx.globalAlpha = .75; ctx.fillStyle = '#3e8b68'; for (let land = 0; land < 13; land++) { const x = centerX + Math.sin(land * 8.1) * radius * .65; const y = centerY + Math.cos(land * 5.7) * radius * .58; ctx.beginPath(); ctx.ellipse(x, y, radius * (.08 + (land % 3) * .035), radius * (.05 + (land % 2) * .03), land, 0, Math.PI * 2); ctx.fill(); }
+        ctx.globalAlpha = .3; ctx.fillStyle = '#f4f1e8'; for (let cloud = 0; cloud < 10; cloud++) { const x = centerX + Math.sin(cloud * 4.3) * radius * .72; const y = centerY + Math.cos(cloud * 7.1) * radius * .58; ctx.beginPath(); ctx.ellipse(x, y, radius * .16, radius * .025, cloud, 0, Math.PI * 2); ctx.fill(); }
+      } else if (['Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Venus'].includes(planet.en)) {
+        ctx.globalAlpha = .25; ctx.strokeStyle = planet.en === 'Jupiter' ? '#8b6041' : '#f6e7bd'; ctx.lineWidth = Math.max(3, radius * .06); for (let band = -5; band <= 5; band++) { ctx.beginPath(); ctx.ellipse(centerX, centerY + band * radius * .13, radius * .95, radius * (.035 + (Math.abs(band) % 2) * .025), 0, 0, Math.PI * 2); ctx.stroke(); }
+      } else {
+        ctx.globalAlpha = .28; ctx.fillStyle = '#4a3026'; for (let crater = 0; crater < 18; crater++) { const x = centerX + Math.sin(crater * 9.2) * radius * .82; const y = centerY + Math.cos(crater * 6.4) * radius * .7; ctx.beginPath(); ctx.arc(x, y, radius * (.012 + (crater % 4) * .008), 0, Math.PI * 2); ctx.fill(); }
+      }
+      const terminator = ctx.createRadialGradient(centerX - radius * .25, centerY - radius * .2, radius * .45, centerX + radius * .55, centerY + radius * .35, radius * 1.15); terminator.addColorStop(0, 'rgba(255,255,255,0)'); terminator.addColorStop(.62, 'rgba(0,0,0,.04)'); terminator.addColorStop(1, 'rgba(0,0,0,.82)'); ctx.globalAlpha = 1; ctx.fillStyle = terminator; ctx.fillRect(centerX - radius, centerY - radius, radius * 2, radius * 2); ctx.restore();
+      ctx.strokeStyle = 'rgba(242, 187, 103, .72)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(centerX, centerY, radius + 10, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = '#f4f1e8'; ctx.font = '700 24px Manrope'; ctx.fillText(planet.name, centerX - radius, centerY + radius + 44); ctx.fillStyle = 'rgba(244,241,232,.62)'; ctx.font = '12px DM Mono'; ctx.fillText(`${planet.en} · 3D 聚焦视图`, centerX - radius, centerY + radius + 66);
+    }
     function updateText() { const date = dateAt(state.day); document.getElementById('dateLabel').textContent = formatDate(date); document.getElementById('dayLabel').textContent = `${state.day === 0 ? '第 0 天' : `${state.day > 0 ? '+' : ''}${state.day} 天`} · 日心参考系`; document.getElementById('timeRange').value = Math.max(-365, Math.min(365, state.day)); }
-    function renderList() { document.getElementById('planetList').innerHTML = planets.map((p, i) => `<button class="planet-button ${i === state.selected ? 'selected' : ''}" data-index="${i}"><span class="planet-dot" style="background:${p.color}"></span>${p.name}</button>`).join(''); document.querySelectorAll('.planet-button').forEach(button => button.addEventListener('click', () => { state.selected = Number(button.dataset.index); renderList(); renderInfo(); draw(); })); }
+    function focusPlanet(index) { state.selected = index; state.focused = true; state.focusProgress = 0; document.getElementById('focusClose').hidden = false; renderList(); renderInfo(); draw(); }
+    function renderList() { document.getElementById('planetList').innerHTML = planets.map((p, i) => `<button class="planet-button ${i === state.selected ? 'selected' : ''}" data-index="${i}"><span class="planet-dot" style="background:${p.color}"></span>${p.name}</button>`).join(''); document.querySelectorAll('.planet-button').forEach(button => button.addEventListener('click', () => focusPlanet(Number(button.dataset.index)))); }
     function renderInfo() { const p = planets[state.selected]; const current = position(p, state.day); const distance = Math.sqrt(current.x * current.x + current.y * current.y).toFixed(2); document.getElementById('infoCard').innerHTML = `<div class="planet-title"><span class="planet-dot" style="background:${p.color}; color:${p.color}"></span><div><h3>${p.name}</h3><p>${p.en} · ${p.type}</p></div></div><div class="stats"><div><div class="label">直径</div><div class="stat-value">${p.diameter}</div></div><div><div class="label">轨道周期</div><div class="stat-value">${p.period.toLocaleString()} 日</div></div><div><div class="label">当前日距</div><div class="stat-value">${distance} AU</div></div><div><div class="label">半长轴</div><div class="stat-value">${p.a} AU</div></div></div><p class="education" style="margin-bottom:0">${p.fact}</p>`; }
     function selectPlanetAt(clientX, clientY) {
-      const rect = canvas.getBoundingClientRect(); const width = rect.width; const height = rect.height; const cx = width / 2; const cy = height / 2 + 20; const maxRadius = Math.min(width, height) * .39 * state.zoom; const scale = maxRadius / Math.sqrt(30.06); const angle = state.rotation + (state.view === 'tilt' ? -.25 : 0);
+      const rect = canvas.getBoundingClientRect(); const width = rect.width; const height = rect.height; const cx = width / 2; const cy = height / 2 + 20; const maxRadius = Math.min(width, height) * .35 * state.zoom; const scale = maxRadius / Math.sqrt(30.06); const angle = state.rotation + (state.view === 'tilt' ? -.25 : 0);
       const cos = Math.cos(-angle); const sin = Math.sin(-angle); const screenX = clientX - rect.left - cx; const screenY = clientY - rect.top - cy; const localX = screenX * cos - screenY * sin; const localY = (screenX * sin + screenY * cos) / (state.view === 'tilt' ? .64 : 1);
       let closestIndex = -1; let closestDistance = Infinity;
-      planets.forEach((planet, index) => { const point = position(planet, state.day); const x = point.x / Math.sqrt(30.06) * maxRadius; const y = point.y / Math.sqrt(30.06) * maxRadius; const distance = Math.hypot(localX - x, localY - y); if (distance <= Math.max(14, 3 + Math.log(planet.a + 1) * 2 + 8) && distance < closestDistance) { closestIndex = index; closestDistance = distance; } });
-      if (closestIndex >= 0) { state.selected = closestIndex; renderList(); renderInfo(); draw(); }
+      planets.forEach((planet, index) => { const point = position(planet, state.day); const angle = Math.atan2(point.y, point.x); const visualRadius = Math.sqrt(Math.hypot(point.x, point.y)) * scale; const x = Math.cos(angle) * visualRadius; const y = Math.sin(angle) * visualRadius; const distance = Math.hypot(localX - x, localY - y); if (distance <= Math.max(14, 3 + Math.log(planet.a + 1) * 2 + 8) && distance < closestDistance) { closestIndex = index; closestDistance = distance; } });
+      if (closestIndex >= 0) focusPlanet(closestIndex);
     }
-    function animate(now) { const delta = Math.min(80, now - lastFrame); lastFrame = now; if (state.playing) state.day += delta / 1000; draw(); requestAnimationFrame(animate); }
+    function animate(now) { const delta = Math.min(80, now - lastFrame); lastFrame = now; if (state.playing) { state.day += delta / 1000 * state.speed; renderInfo(); } if (state.focused && state.focusProgress < 1) state.focusProgress = Math.min(1, state.focusProgress + delta / 450); if (!state.focused && state.focusProgress > 0) state.focusProgress = Math.max(0, state.focusProgress - delta / 300); draw(); requestAnimationFrame(animate); }
     document.getElementById('playButton').addEventListener('click', event => { state.playing = !state.playing; event.currentTarget.textContent = state.playing ? 'Ⅱ' : '▶'; event.currentTarget.setAttribute('aria-label', state.playing ? '暂停动画' : '播放动画'); });
+    document.getElementById('speedRange').addEventListener('input', event => { state.speed = Number(event.target.value); document.getElementById('speedValue').textContent = `${state.speed}×`; });
     document.getElementById('timeRange').addEventListener('input', event => { state.day = Number(event.target.value); renderInfo(); draw(); });
     document.getElementById('backButton').addEventListener('click', () => { state.day -= 30; renderInfo(); draw(); });
     document.getElementById('forwardButton').addEventListener('click', () => { state.day += 30; renderInfo(); draw(); });
     document.getElementById('todayButton').addEventListener('click', () => { state.day = 0; renderInfo(); draw(); });
     document.getElementById('orbitToggle').addEventListener('change', event => { state.showOrbits = event.target.checked; draw(); });
     document.getElementById('labelToggle').addEventListener('change', event => { state.showLabels = event.target.checked; draw(); });
-    document.getElementById('resetView').addEventListener('click', () => { state.zoom = 1; state.rotation = 0; state.view = 'top'; document.querySelectorAll('[data-view]').forEach(button => button.classList.toggle('active', button.dataset.view === 'top')); draw(); });
+    document.getElementById('resetView').addEventListener('click', () => { state.zoom = 1; state.rotation = 0; state.view = 'top'; state.focused = false; document.getElementById('focusClose').hidden = true; document.querySelectorAll('[data-view]').forEach(button => button.classList.toggle('active', button.dataset.view === 'top')); draw(); });
+    document.getElementById('focusClose').addEventListener('click', () => { state.focused = false; document.getElementById('focusClose').hidden = true; draw(); });
     document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => { state.view = button.dataset.view; document.querySelectorAll('[data-view]').forEach(item => item.classList.toggle('active', item === button)); draw(); }));
     canvas.addEventListener('wheel', event => { event.preventDefault(); state.zoom = Math.max(.72, Math.min(1.45, state.zoom - event.deltaY * .0005)); draw(); }, { passive: false });
     let dragging = false; let moved = false; let lastPointerX = 0; let pointerStartX = 0; let pointerStartY = 0;
