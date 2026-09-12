@@ -24,12 +24,12 @@
         <span>LumenOS</span>
       </button>
       <div class="topbar-center"><span class="topbar-pulse"></span> quiet mode / exploring</div>
-      <div class="topbar-right"><span id="dateText">SAT, SEP 12</span><span class="clock" id="timeText">00:00</span></div>
+      <div class="topbar-right"><button class="system-button" id="systemOpen" aria-label="Open system settings">SYS</button><span id="dateText">SAT, SEP 12</span><span class="clock" id="timeText">00:00</span></div>
     </header>
 
     <section class="desktop-intro" aria-label="Desktop introduction">
       <p class="eyebrow">WELCOME BACK, VISITOR</p>
-      <h2>Build a life<br>you can <em>visit.</em></h2>
+      <h2 aria-label="Build a life you can visit."><span class="title-letter">B</span><span class="title-letter">u</span><span class="title-letter">i</span><span class="title-letter">l</span><span class="title-letter">d</span> <span class="title-letter">a</span> <span class="title-letter">l</span><span class="title-letter">i</span><span class="title-letter">f</span><span class="title-letter">e</span><br><span class="title-letter">y</span><span class="title-letter">o</span><span class="title-letter">u</span> <span class="title-letter">c</span><span class="title-letter">a</span><span class="title-letter">n</span> <em><span class="title-letter">v</span><span class="title-letter">i</span><span class="title-letter">s</span><span class="title-letter">i</span><span class="title-letter">t</span><span class="title-letter">.</span></em></h2>
       <p>Three windows are open to interpretation.</p>
     </section>
 
@@ -45,6 +45,10 @@
       <button class="app-icon" data-open="atlasWindow">
         <span class="icon-tile atlas-tile"><span class="atlas-cross"></span></span>
         <span class="app-name">The Atlas</span><span class="app-meta">places / 04</span>
+      </button>
+      <button class="app-icon" data-open="systemWindow">
+        <span class="icon-tile system-tile"><span>+</span></span>
+        <span class="app-name">System</span><span class="app-meta">settings / 02</span>
       </button>
     </section>
 
@@ -66,7 +70,7 @@
 
     <div class="window notes-window" id="fieldNotes" style="top: 13%; left: 13%; display: none;">
       <div class="window-header" data-drag-handle><div class="window-controls"><button class="window-control close" data-close="fieldNotes" aria-label="Close window"></button><button class="window-control minimize" data-minimize="fieldNotes" aria-label="Minimize window"></button></div><span class="window-title">field-notes.app</span><span class="window-index">03</span></div>
-      <div class="window-body notes-layout"><nav class="notes-sidebar" id="notesList"></nav><article class="note-reader"><div class="note-kicker" id="noteKicker">01 / OBSERVATION</div><h3 id="noteTitle"></h3><p class="note-date" id="noteDate"></p><div class="note-content" id="noteContent"></div><div class="note-footer"><span>editable memory</span><button class="mini-action" id="randomNote">shuffle &rarr;</button></div></article></div>
+      <div class="window-body notes-layout"><nav class="notes-sidebar" id="notesList"></nav><article class="note-reader"><div class="note-kicker" id="noteKicker">01 / OBSERVATION</div><input class="note-title-input" id="noteTitle" aria-label="Note title" placeholder="Untitled note"><p class="note-date" id="noteDate"></p><textarea class="note-editor" id="noteEditor" aria-label="Note content" placeholder="Start writing..."></textarea><div class="note-footer"><div class="note-actions"><button class="mini-action" id="newNote">+ new</button><button class="mini-action save-action" id="saveNote">save</button><button class="mini-action delete-action" id="deleteNote">delete</button></div><button class="mini-action" id="randomNote">shuffle &rarr;</button></div></article></div>
     </div>
 
     <div class="window about-window" id="aboutWindow" style="top: 25%; left: 56%; display: none;">
@@ -79,7 +83,19 @@
       <div class="window-body atlas-body"><div class="map-grid"><div class="map-route route-one"></div><div class="map-route route-two"></div><button class="map-pin pin-one" data-place="Reykjavik"><span></span></button><button class="map-pin pin-two" data-place="Kyoto"><span></span></button><button class="map-pin pin-three" data-place="Home, for now"><span></span></button><div class="map-label label-one">REYKJAVIK</div><div class="map-label label-two">KYOTO</div><div class="map-label label-three">HOME, FOR NOW</div></div><div class="atlas-caption"><p class="eyebrow">PLACES THAT STAY</p><h3 id="placeTitle">Click a pin.</h3><p id="placeCopy">Some coordinates are geographical. The important ones are emotional.</p></div></div>
     </div>
 
-    <aside class="dock" aria-label="Quick launch"><button data-open="welcomeWindow" class="dock-item active"><span class="dock-glyph">L</span><span>home</span></button><button data-open="fieldNotes" class="dock-item"><span class="dock-glyph">&equiv;</span><span>notes</span></button><button data-open="aboutWindow" class="dock-item"><span class="dock-glyph">?</span><span>about</span></button><button data-open="atlasWindow" class="dock-item"><span class="dock-glyph">+</span><span>atlas</span></button></aside>
+    <div class="window system-window" id="systemWindow" style="top: 16%; left: 55%; display: none;">
+      <div class="window-header" data-drag-handle><div class="window-controls"><button class="window-control close" data-close="systemWindow" aria-label="Close window"></button><button class="window-control minimize" data-minimize="systemWindow" aria-label="Minimize window"></button></div><span class="window-title">system.settings</span><span class="window-index">02</span></div>
+      <div class="window-body system-body">
+        <p class="eyebrow">DESKTOP APPEARANCE</p>
+        <h3>Make this place<br><em>feel like yours.</em></h3>
+        <div class="setting-group"><label for="backgroundColor">Solid color</label><div class="color-control"><input id="backgroundColor" type="color" value="#a8c7bd"><span id="backgroundColorValue">#a8c7bd</span></div></div>
+        <div class="setting-group"><label for="backgroundPreset">Atmosphere</label><select id="backgroundPreset"><option value="mint">Mint morning</option><option value="sunset">Soft sunset</option><option value="night">Night study</option><option value="plain">Plain color</option></select></div>
+        <div class="setting-group"><label for="backgroundImage">Image URL <span>optional</span></label><input class="text-input" id="backgroundImage" type="url" placeholder="https://.../image.jpg"><button class="mini-action apply-image" id="applyBackground">apply image &rarr;</button></div>
+        <div class="system-actions"><button class="text-button" id="resetBackground">Reset background</button><button class="shutdown-button" id="shutdownButton">Close interface <span>&times;</span></button></div>
+      </div>
+    </div>
+
+    <aside class="dock" aria-label="Quick launch"><button data-open="welcomeWindow" class="dock-item active"><span class="dock-glyph">L</span><span>home</span></button><button data-open="fieldNotes" class="dock-item"><span class="dock-glyph">&equiv;</span><span>notes</span></button><button data-open="aboutWindow" class="dock-item"><span class="dock-glyph">?</span><span>about</span></button><button data-open="atlasWindow" class="dock-item"><span class="dock-glyph">+</span><span>atlas</span></button><button data-open="systemWindow" class="dock-item"><span class="dock-glyph">&#9881;</span><span>system</span></button></aside>
   </main>
   <script src="script.js"></script>
 </body>
