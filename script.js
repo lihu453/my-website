@@ -4,6 +4,8 @@ const topbar = document.querySelector('#topbar');
 const defaultDesktopBackground = 'linear-gradient(135deg, #a8c7bd 0%, #c4d8be 52%, #e8e4be 100%)';
 let highestZ = 20;
 let dragState = null;
+let browserHistory = ['https://example.com'];
+let browserHistoryIndex = 0;
 
 const defaultNotes = [
   { title: 'The quiet utility of a blank page', date: 'SEP 09 / 2026', type: 'OBSERVATION', content: '<p>A blank page is not empty. It is a room with the lights off, waiting for the first honest object.</p><blockquote>Leave a little space for the thought to arrive.</blockquote><p>That is the whole reason I keep making tools: to make room.</p>' },
@@ -67,6 +69,51 @@ function closeWindow(id) {
 function minimizeWindow(id) {
   const element = document.getElementById(id);
   if (element) element.style.display = 'none';
+}
+
+function saveWindowBounds(element) {
+  if (element.dataset.savedBounds) return;
+  element.dataset.savedBounds = JSON.stringify({
+    top: element.style.top,
+    left: element.style.left,
+    width: element.style.width,
+    height: element.style.height
+  });
+}
+
+function restoreWindowBounds(element) {
+  if (!element.dataset.savedBounds) return;
+  const bounds = JSON.parse(element.dataset.savedBounds);
+  Object.entries(bounds).forEach(([property, value]) => { element.style[property] = value; });
+  delete element.dataset.savedBounds;
+}
+
+function toggleMaximize(id) {
+  const element = document.getElementById(id);
+  if (!element) return;
+  bringToFront(element);
+  if (element.classList.contains('maximized')) {
+    element.classList.remove('maximized');
+    restoreWindowBounds(element);
+  } else {
+    saveWindowBounds(element);
+    element.classList.remove('fullscreen');
+    element.classList.add('maximized');
+  }
+}
+
+function toggleFullscreen(id) {
+  const element = document.getElementById(id);
+  if (!element) return;
+  bringToFront(element);
+  if (element.classList.contains('fullscreen')) {
+    element.classList.remove('fullscreen');
+    restoreWindowBounds(element);
+  } else {
+    saveWindowBounds(element);
+    element.classList.remove('maximized');
+    element.classList.add('fullscreen');
+  }
 }
 
 function setDesktopBackground(background, image = '') {
@@ -155,6 +202,37 @@ function deleteActiveNote() {
   renderNote(activeNoteIndex);
 }
 
+function normalizeBrowserUrl(value) {
+  const candidate = value.trim().match(/^https?:\/\//i) ? value.trim() : `https://${value.trim()}`;
+  const url = new URL(candidate);
+  if (!['http:', 'https:'].includes(url.protocol)) throw new Error('Unsupported protocol');
+  return url.href;
+}
+
+function updateBrowserHistoryButtons() {
+  document.querySelector('#browserBack').disabled = browserHistoryIndex === 0;
+  document.querySelector('#browserForward').disabled = browserHistoryIndex === browserHistory.length - 1;
+}
+
+function navigateBrowser(value, addToHistory = true) {
+  let url;
+  try {
+    url = normalizeBrowserUrl(value);
+  } catch (error) {
+    document.querySelector('#browserStatus').textContent = 'enter a valid http or https address';
+    return;
+  }
+  if (addToHistory) {
+    browserHistory = browserHistory.slice(0, browserHistoryIndex + 1);
+    if (browserHistory[browserHistory.length - 1] !== url) browserHistory.push(url);
+    browserHistoryIndex = browserHistory.length - 1;
+  }
+  document.querySelector('#browserAddress').value = url;
+  document.querySelector('#browserStatus').innerHTML = '<span class="status-dot"></span> loading';
+  document.querySelector('#browserFrame').src = url;
+  updateBrowserHistoryButtons();
+}
+
 function setupDragging(element) {
   const handle = element.querySelector('[data-drag-handle]');
   if (!handle) return;
@@ -187,6 +265,38 @@ document.querySelector('#systemOpen').addEventListener('click', () => openWindow
 document.querySelectorAll('[data-open]').forEach((button) => button.addEventListener('click', () => openWindow(button.dataset.open)));
 document.querySelectorAll('[data-close]').forEach((button) => button.addEventListener('click', () => closeWindow(button.dataset.close)));
 document.querySelectorAll('[data-minimize]').forEach((button) => button.addEventListener('click', () => minimizeWindow(button.dataset.minimize)));
+document.querySelectorAll('[data-maximize]').forEach((button) => button.addEventListener('click', () => toggleMaximize(button.dataset.maximize)));
+document.querySelectorAll('[data-fullscreen]').forEach((button) => button.addEventListener('click', () => toggleFullscreen(button.dataset.fullscreen)));
+document.querySelector('#browserForm').addEventListener('submit', (event) => {
+  event.preventDefault();
+  navigateBrowser(document.querySelector('#browserAddress').value);
+});
+document.querySelector('#browserBack').addEventListener('click', () => {
+  if (browserHistoryIndex > 0) {
+    browserHistoryIndex -= 1;
+    navigateBrowser(browserHistory[browserHistoryIndex], false);
+  }
+});
+document.querySelector('#browserForward').addEventListener('click', () => {
+  if (browserHistoryIndex < browserHistory.length - 1) {
+    browserHistoryIndex += 1;
+    navigateBrowser(browserHistory[browserHistoryIndex], false);
+  }
+});
+document.querySelector('#browserReload').addEventListener('click', () => {
+  const frame = document.querySelector('#browserFrame');
+  frame.src = frame.src;
+});
+document.querySelector('#browserExternal').addEventListener('click', () => {
+  try {
+    window.open(normalizeBrowserUrl(document.querySelector('#browserAddress').value), '_blank', 'noopener');
+  } catch (error) {
+    document.querySelector('#browserStatus').textContent = 'enter a valid http or https address';
+  }
+});
+document.querySelector('#browserFrame').addEventListener('load', () => {
+  document.querySelector('#browserStatus').innerHTML = '<span class="status-dot"></span> page loaded';
+});
 document.querySelector('#randomNote').addEventListener('click', () => renderNote(Math.floor(Math.random() * notes.length)));
 document.querySelector('#newNote').addEventListener('click', createNote);
 document.querySelector('#saveNote').addEventListener('click', saveActiveNote);
@@ -225,6 +335,7 @@ document.querySelectorAll('.map-pin').forEach((pin) => pin.addEventListener('cli
 createNoteTabs();
 renderNote();
 document.querySelectorAll('.window').forEach(setupDragging);
+updateBrowserHistoryButtons();
 restoreDesktopBackground();
 updateClock();
 setInterval(updateClock, 1000);
