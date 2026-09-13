@@ -55,6 +55,7 @@ function openWindow(id) {
   resetTitleLetters();
   element.style.display = 'block';
   bringToFront(element);
+  if (id === 'gamesWindow' && game.state === 'paused') setGameMessage('Paused. Press jump to continue.');
 }
 
 function resetTitleLetters() {
@@ -64,11 +65,13 @@ function resetTitleLetters() {
 function closeWindow(id) {
   const element = document.getElementById(id);
   if (element) element.style.display = 'none';
+  if (id === 'gamesWindow') pauseGame();
 }
 
 function minimizeWindow(id) {
   const element = document.getElementById(id);
   if (element) element.style.display = 'none';
+  if (id === 'gamesWindow') pauseGame();
 }
 
 function saveWindowBounds(element) {
@@ -114,6 +117,188 @@ function toggleFullscreen(id) {
     element.classList.remove('maximized');
     element.classList.add('fullscreen');
   }
+}
+
+const game = {
+  state: 'ready',
+  animationId: null,
+  lastTime: 0,
+  score: 0,
+  best: loadGameBest(),
+  speed: 260,
+  spawnTimer: 1.1,
+  player: { x: 92, y: 207, width: 29, height: 38, velocityY: 0 },
+  obstacles: []
+};
+
+function loadGameBest() {
+  try {
+    const savedBest = Number(localStorage.getItem('lumenGameBest'));
+    return Number.isFinite(savedBest) && savedBest > 0 ? Math.floor(savedBest) : 0;
+  } catch (error) {
+    return 0;
+  }
+}
+
+function setGameMessage(message) {
+  const messageElement = document.querySelector('#gameMessage');
+  if (messageElement) {
+    messageElement.textContent = message;
+    messageElement.classList.toggle('hidden', !message);
+  }
+}
+
+function updateGameScore() {
+  document.querySelector('#gameScore').textContent = String(Math.floor(game.score)).padStart(5, '0');
+  document.querySelector('#gameBest').textContent = String(game.best).padStart(5, '0');
+}
+
+function resetGame(showMessage = true) {
+  game.state = 'ready';
+  game.score = 0;
+  game.speed = 260;
+  game.spawnTimer = 1.1;
+  game.player.y = 207;
+  game.player.velocityY = 0;
+  game.obstacles = [];
+  if (game.animationId) cancelAnimationFrame(game.animationId);
+  game.animationId = null;
+  updateGameScore();
+  drawGame();
+  setGameMessage(showMessage ? 'Press start or jump to begin.' : '');
+}
+
+function startGame() {
+  if (game.state === 'running') return;
+  if (game.state === 'gameOver') resetGame(false);
+  game.state = 'running';
+  game.lastTime = performance.now();
+  setGameMessage('');
+  document.querySelector('#gameCanvas').focus();
+  game.animationId = requestAnimationFrame(gameLoop);
+}
+
+function pauseGame() {
+  if (game.state !== 'running') return;
+  game.state = 'paused';
+  if (game.animationId) cancelAnimationFrame(game.animationId);
+  game.animationId = null;
+  setGameMessage('Paused. Press jump to continue.');
+}
+
+function jumpGame() {
+  if (game.state === 'ready' || game.state === 'paused') startGame();
+  if (game.state !== 'running') return;
+  const groundY = 245 - game.player.height;
+  if (game.player.y >= groundY - 1) game.player.velocityY = -610;
+}
+
+function endGame() {
+  game.state = 'gameOver';
+  if (game.animationId) cancelAnimationFrame(game.animationId);
+  game.animationId = null;
+  const finalScore = Math.floor(game.score);
+  if (finalScore > game.best) {
+    game.best = finalScore;
+    try { localStorage.setItem('lumenGameBest', String(game.best)); } catch (error) { }
+  }
+  updateGameScore();
+  setGameMessage('Run ended. Press restart to try again.');
+  drawGame();
+}
+
+function spawnGameObstacle() {
+  const height = 25 + Math.random() * 32;
+  const width = 17 + Math.random() * 14;
+  game.obstacles.push({ x: 780, y: 245 - height, width, height });
+}
+
+function intersects(first, second) {
+  const padding = 5;
+  return first.x + padding < second.x + second.width && first.x + first.width - padding > second.x && first.y + padding < second.y + second.height && first.y + first.height - padding > second.y;
+}
+
+function updateGame(delta) {
+  const groundY = 245 - game.player.height;
+  game.score += delta * 10;
+  game.speed = 260 + Math.min(game.score * 2.2, 240);
+  game.player.velocityY += 1500 * delta;
+  game.player.y = Math.min(groundY, game.player.y + game.player.velocityY * delta);
+  game.spawnTimer -= delta;
+  if (game.spawnTimer <= 0) {
+    spawnGameObstacle();
+    game.spawnTimer = Math.max(0.65, 1.35 - game.score / 500) + Math.random() * 0.55;
+  }
+  game.obstacles.forEach((obstacle) => { obstacle.x -= game.speed * delta; });
+  game.obstacles = game.obstacles.filter((obstacle) => obstacle.x + obstacle.width > -10);
+  if (game.obstacles.some((obstacle) => intersects(game.player, obstacle))) endGame();
+  updateGameScore();
+}
+
+function drawGame() {
+  const canvas = document.querySelector('#gameCanvas');
+  if (!canvas) return;
+  const context = canvas.getContext('2d');
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = '#f4f2e9';
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.strokeStyle = 'rgba(27,41,39,.09)';
+  context.lineWidth = 1;
+  for (let x = 20; x < canvas.width; x += 38) {
+    context.beginPath();
+    context.moveTo(x, 0);
+    context.lineTo(x, canvas.height);
+    context.stroke();
+  }
+  context.strokeStyle = '#1b2927';
+  context.beginPath();
+  context.moveTo(0, 245.5);
+  context.lineTo(canvas.width, 245.5);
+  context.stroke();
+  const player = game.player;
+  context.fillStyle = '#1b2927';
+  context.fillRect(player.x + 7, player.y + 8, 18, 25);
+  context.fillRect(player.x + 13, player.y + 2, 12, 10);
+  context.fillRect(player.x + 24, player.y + 7, 8, 4);
+  context.fillRect(player.x + 2, player.y + 14, 7, 6);
+  context.fillRect(player.x + 9, player.y + 32, 5, 6);
+  context.fillRect(player.x + 21, player.y + 32, 5, 6);
+  context.fillStyle = '#d8ff62';
+  context.fillRect(player.x + 21, player.y + 5, 3, 3);
+  game.obstacles.forEach((obstacle) => {
+    context.fillStyle = '#ff8066';
+    context.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+    context.fillStyle = '#1b2927';
+    context.fillRect(obstacle.x + obstacle.width / 2 - 1, obstacle.y - 7, 2, 7);
+  });
+}
+
+function gameLoop(timestamp) {
+  if (game.state !== 'running') return;
+  const delta = Math.min((timestamp - game.lastTime) / 1000, 0.05);
+  game.lastTime = timestamp;
+  updateGame(delta);
+  drawGame();
+  if (game.state === 'running') game.animationId = requestAnimationFrame(gameLoop);
+}
+
+function initGame() {
+  document.querySelector('#gameStart').addEventListener('click', startGame);
+  document.querySelector('#gamePause').addEventListener('click', pauseGame);
+  document.querySelector('#gameReset').addEventListener('click', () => resetGame());
+  document.querySelector('#gameJump').addEventListener('click', jumpGame);
+  document.querySelector('#gameCanvas').addEventListener('pointerdown', jumpGame);
+  window.addEventListener('keydown', (event) => {
+    const target = event.target;
+    const gamesWindow = document.querySelector('#gamesWindow');
+    if (gamesWindow.style.display === 'none' || target.matches('input, textarea, select, button')) return;
+    if (event.code === 'Space' || event.code === 'ArrowUp') {
+      event.preventDefault();
+      jumpGame();
+    }
+    if (event.code === 'KeyP') pauseGame();
+  });
+  resetGame();
 }
 
 function setDesktopBackground(background, image = '') {
@@ -334,6 +519,7 @@ document.querySelectorAll('.map-pin').forEach((pin) => pin.addEventListener('cli
 
 createNoteTabs();
 renderNote();
+initGame();
 document.querySelectorAll('.window').forEach(setupDragging);
 updateBrowserHistoryButtons();
 restoreDesktopBackground();
