@@ -54,6 +54,10 @@
         <span class="icon-tile browser-tile"><span>&bull;</span></span>
         <span class="app-name">Browser</span><span class="app-meta">the web / 05</span>
       </button>
+      <button class="app-icon" data-open="gamesWindow">
+        <span class="icon-tile games-tile"><span>RUN</span></span>
+        <span class="app-name">Mini Runner</span><span class="app-meta">play / 06</span>
+      </button>
     </section>
 
     <div class="desktop-footer"><span>v1.0.3</span><span>memory is a medium</span><span>scroll to wander</span></div>
@@ -111,7 +115,17 @@
       </div>
     </div>
 
-    <aside class="dock" aria-label="Quick launch"><button data-open="welcomeWindow" class="dock-item active"><span class="dock-glyph">L</span><span>home</span></button><button data-open="fieldNotes" class="dock-item"><span class="dock-glyph">&equiv;</span><span>notes</span></button><button data-open="aboutWindow" class="dock-item"><span class="dock-glyph">?</span><span>about</span></button><button data-open="atlasWindow" class="dock-item"><span class="dock-glyph">+</span><span>atlas</span></button><button data-open="systemWindow" class="dock-item"><span class="dock-glyph">&#9881;</span><span>system</span></button><button data-open="browserWindow" class="dock-item"><span class="dock-glyph">&bull;</span><span>browser</span></button></aside>
+    <div class="window games-window" id="gamesWindow" style="top: 14%; left: 24%; display: none;" role="dialog" aria-labelledby="gamesWindowTitle">
+      <div class="window-header" data-drag-handle><div class="window-controls"><button class="window-control close" data-close="gamesWindow" aria-label="Close window"></button><button class="window-control minimize" data-minimize="gamesWindow" aria-label="Minimize window"></button><button class="window-control maximize" data-maximize="gamesWindow" aria-label="Maximize window"></button><button class="window-control fullscreen" data-fullscreen="gamesWindow" aria-label="Enter fullscreen window">+</button></div><span class="window-title" id="gamesWindowTitle">mini-runner.game</span><span class="window-index">06</span></div>
+      <div class="game-body">
+        <div class="game-heading"><div><p class="eyebrow">A SMALL DISTRACTION</p><h3>Keep moving.<br><em>Stay curious.</em></h3></div><div class="game-score"><span>score</span><strong id="gameScore">00000</strong><span>best <b id="gameBest">00000</b></span></div></div>
+        <div class="game-stage"><canvas id="gameCanvas" width="760" height="300" tabindex="0" aria-label="Mini Runner game area"></canvas><div class="game-message" id="gameMessage">Press start or jump to begin.</div></div>
+        <div class="game-actions"><button class="text-button" id="gameStart">Start running <span>&rarr;</span></button><button class="mini-action" id="gamePause">pause</button><button class="mini-action" id="gameReset">reset</button><button class="game-jump" id="gameJump" type="button">jump <span>&uarr;</span></button></div>
+        <p class="game-hint">SPACE / &uarr; to jump <span>•</span> dodge the quiet obstacles</p>
+      </div>
+    </div>
+
+    <aside class="dock" aria-label="Quick launch"><button data-open="welcomeWindow" class="dock-item active"><span class="dock-glyph">L</span><span>home</span></button><button data-open="fieldNotes" class="dock-item"><span class="dock-glyph">&equiv;</span><span>notes</span></button><button data-open="aboutWindow" class="dock-item"><span class="dock-glyph">?</span><span>about</span></button><button data-open="atlasWindow" class="dock-item"><span class="dock-glyph">+</span><span>atlas</span></button><button data-open="systemWindow" class="dock-item"><span class="dock-glyph">&#9881;</span><span>system</span></button><button data-open="browserWindow" class="dock-item"><span class="dock-glyph">&bull;</span><span>browser</span></button><button data-open="gamesWindow" class="dock-item"><span class="dock-glyph">RUN</span><span>play</span></button></aside>
   </main>
   <script src="script.js"></script>
 </body>
