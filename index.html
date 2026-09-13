@@ -58,6 +58,10 @@
         <span class="icon-tile games-tile"><span>RUN</span></span>
         <span class="app-name">Mini Runner</span><span class="app-meta">play / 06</span>
       </button>
+      <button class="app-icon" data-open="filesWindow">
+        <span class="icon-tile files-tile"><span class="folder-mark"></span></span>
+        <span class="app-name">Files</span><span class="app-meta">storage / 07</span>
+      </button>
     </section>
 
     <div class="desktop-footer"><span>v1.0.3</span><span>memory is a medium</span><span>scroll to wander</span></div>
@@ -125,7 +129,20 @@
       </div>
     </div>
 
-    <aside class="dock" aria-label="Quick launch"><button data-open="welcomeWindow" class="dock-item active"><span class="dock-glyph">L</span><span>home</span></button><button data-open="fieldNotes" class="dock-item"><span class="dock-glyph">&equiv;</span><span>notes</span></button><button data-open="aboutWindow" class="dock-item"><span class="dock-glyph">?</span><span>about</span></button><button data-open="atlasWindow" class="dock-item"><span class="dock-glyph">+</span><span>atlas</span></button><button data-open="systemWindow" class="dock-item"><span class="dock-glyph">&#9881;</span><span>system</span></button><button data-open="browserWindow" class="dock-item"><span class="dock-glyph">&bull;</span><span>browser</span></button><button data-open="gamesWindow" class="dock-item"><span class="dock-glyph">RUN</span><span>play</span></button></aside>
+    <div class="window files-window" id="filesWindow" style="top: 12%; left: 18%; display: none;" role="dialog" aria-labelledby="filesWindowTitle">
+      <div class="window-header" data-drag-handle><div class="window-controls"><button class="window-control close" data-close="filesWindow" aria-label="Close window"></button><button class="window-control minimize" data-minimize="filesWindow" aria-label="Minimize window"></button><button class="window-control maximize" data-maximize="filesWindow" aria-label="Maximize window"></button><button class="window-control fullscreen" data-fullscreen="filesWindow" aria-label="Enter fullscreen window">+</button></div><span class="window-title" id="filesWindowTitle">files.manager</span><span class="window-index">07</span></div>
+      <div class="files-body">
+        <div class="files-toolbar"><div><p class="eyebrow">LOCAL STORAGE</p><h3>Keep what matters.</h3></div><button class="mini-action" id="newFile" type="button">+ new file</button></div>
+        <div class="files-status" id="filesStatus" role="status" aria-live="polite"></div>
+        <div class="files-layout">
+          <section class="files-list-panel" aria-label="Files"><div class="files-list-heading"><span id="fileCount">00 files</span><button class="mini-action" id="refreshFiles" type="button">refresh</button></div><div class="files-list" id="filesList"></div><p class="files-empty hidden" id="filesEmpty">Nothing here yet.<br>Make a small place for it.</p></section>
+          <section class="file-detail" id="fileDetail" aria-live="polite"><div class="file-detail-empty" id="fileDetailEmpty"><span class="detail-symbol">+</span><p>Select a file to open it.</p></div><div class="file-preview hidden" id="filePreview"></div></section>
+        </div>
+        <form class="file-form hidden" id="fileForm"><div class="file-form-heading"><p class="eyebrow" id="fileFormEyebrow">NEW FILE</p><button class="mini-action" id="cancelFile" type="button">cancel</button></div><label>File name<input class="text-input" id="fileName" type="text" placeholder="untitled.txt" required></label><label>Type<select class="text-input" id="fileType"><option value="text">Text</option><option value="image">Image</option><option value="video">Video</option></select></label><label class="file-upload hidden" id="fileUploadLabel">Choose media<input class="text-input" id="fileUpload" type="file" accept="image/*,video/*"></label><label id="fileContentLabel">Content<textarea class="file-content-input" id="fileContent" placeholder="Start writing..."></textarea></label><div class="file-form-actions"><button class="mini-action" id="saveFile" type="submit">save file</button></div></form>
+      </div>
+    </div>
+
+    <aside class="dock" aria-label="Quick launch"><button data-open="welcomeWindow" class="dock-item active"><span class="dock-glyph">L</span><span>home</span></button><button data-open="fieldNotes" class="dock-item"><span class="dock-glyph">&equiv;</span><span>notes</span></button><button data-open="aboutWindow" class="dock-item"><span class="dock-glyph">?</span><span>about</span></button><button data-open="atlasWindow" class="dock-item"><span class="dock-glyph">+</span><span>atlas</span></button><button data-open="systemWindow" class="dock-item"><span class="dock-glyph">&#9881;</span><span>system</span></button><button data-open="browserWindow" class="dock-item"><span class="dock-glyph">&bull;</span><span>browser</span></button><button data-open="gamesWindow" class="dock-item"><span class="dock-glyph">RUN</span><span>play</span></button><button data-open="filesWindow" class="dock-item"><span class="dock-glyph">[]</span><span>files</span></button></aside>
   </main>
   <script src="script.js"></script>
 </body>

@@ -15,6 +15,9 @@ const defaultNotes = [
 ];
 let notes = loadNotes();
 let activeNoteIndex = 0;
+let files = loadFiles();
+let activeFileId = null;
+let pendingMedia = null;
 
 function loadNotes() {
   try {
@@ -332,6 +335,30 @@ function initGame() {
   resetGame();
 }
 
+function initCursorTrail() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  let lastX = -100;
+  let lastY = -100;
+  let lastTime = 0;
+
+  document.addEventListener('pointermove', (event) => {
+    if (event.pointerType && event.pointerType !== 'mouse') return;
+    const now = performance.now();
+    const distance = Math.hypot(event.clientX - lastX, event.clientY - lastY);
+    if (now - lastTime < 35 || distance < 14) return;
+    lastX = event.clientX;
+    lastY = event.clientY;
+    lastTime = now;
+
+    const block = document.createElement('span');
+    block.className = 'cursor-trail-block';
+    block.style.left = `${event.clientX}px`;
+    block.style.top = `${event.clientY}px`;
+    document.body.appendChild(block);
+    window.setTimeout(() => block.remove(), 520);
+  });
+}
+
 function setDesktopBackground(background, image = '') {
   if (image) {
     desktop.style.background = 'none';
@@ -416,6 +443,210 @@ function deleteActiveNote() {
   saveNotes();
   createNoteTabs();
   renderNote(activeNoteIndex);
+}
+
+function loadFiles() {
+  try {
+    const savedFiles = JSON.parse(localStorage.getItem('lumenFiles'));
+    return Array.isArray(savedFiles) ? savedFiles.filter((file) => file && file.id && file.name && typeof file.content === 'string') : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function saveFiles() {
+  try {
+    localStorage.setItem('lumenFiles', JSON.stringify(files));
+    return true;
+  } catch (error) {
+    setFilesStatus('Could not save this file. Browser storage may be full.', true);
+    return false;
+  }
+}
+
+function setFilesStatus(message = '', isError = false) {
+  const status = document.querySelector('#filesStatus');
+  if (!status) return;
+  status.textContent = message;
+  status.classList.toggle('error', isError);
+}
+
+function formatFileSize(bytes) {
+  if (!bytes) return 'empty';
+  if (bytes < 1024) return `${bytes} B`;
+  return `${(bytes / 1024).toFixed(bytes < 10240 ? 1 : 0)} KB`;
+}
+
+function fileTypeLabel(type) {
+  return type === 'image' ? 'IMAGE' : type === 'video' ? 'VIDEO' : 'TEXT';
+}
+
+function renderFiles() {
+  const list = document.querySelector('#filesList');
+  const empty = document.querySelector('#filesEmpty');
+  const count = document.querySelector('#fileCount');
+  if (!list || !empty || !count) return;
+  const sortedFiles = [...files].sort((first, second) => second.updatedAt - first.updatedAt);
+  list.innerHTML = '';
+  count.textContent = `${String(files.length).padStart(2, '0')} ${files.length === 1 ? 'file' : 'files'}`;
+  empty.classList.toggle('hidden', files.length > 0);
+  sortedFiles.forEach((file) => {
+    const button = document.createElement('button');
+    button.className = `file-item${file.id === activeFileId ? ' active' : ''}`;
+    button.type = 'button';
+    button.dataset.fileId = file.id;
+    button.innerHTML = `<span class="file-icon ${file.type}-file-icon">${file.type === 'text' ? 'TXT' : file.type === 'image' ? 'IMG' : 'VID'}</span><span class="file-item-copy"><strong></strong><small>${fileTypeLabel(file.type)} / ${formatFileSize(file.size)}</small></span>`;
+    button.querySelector('strong').textContent = file.name;
+    list.appendChild(button);
+  });
+}
+
+function clearFileDetail() {
+  activeFileId = null;
+  document.querySelector('#fileDetailEmpty').classList.remove('hidden');
+  document.querySelector('#filePreview').classList.add('hidden');
+  document.querySelector('#filePreview').innerHTML = '';
+  renderFiles();
+}
+
+function openFile(fileId) {
+  const file = files.find((item) => item.id === fileId);
+  if (!file) return;
+  activeFileId = file.id;
+  const empty = document.querySelector('#fileDetailEmpty');
+  const preview = document.querySelector('#filePreview');
+  empty.classList.add('hidden');
+  preview.classList.remove('hidden');
+  const safeName = document.createElement('span');
+  safeName.textContent = file.name;
+  if (file.type === 'text') {
+    preview.innerHTML = `<div class="file-preview-heading"><div><p class="eyebrow">TEXT FILE</p><h4></h4></div><button class="mini-action delete-file" type="button">delete</button></div><textarea class="file-open-editor" aria-label="File content"></textarea><div class="file-preview-actions"><button class="mini-action save-open-file" type="button">save changes</button></div>`;
+    preview.querySelector('h4').appendChild(safeName);
+    preview.querySelector('.file-open-editor').value = file.content.replace(/^data:text\/plain;base64,/, '');
+  } else {
+    preview.innerHTML = `<div class="file-preview-heading"><div><p class="eyebrow">${fileTypeLabel(file.type)} FILE</p><h4></h4></div><button class="mini-action delete-file" type="button">delete</button></div>`;
+    preview.querySelector('h4').appendChild(safeName);
+    const media = document.createElement(file.type === 'image' ? 'img' : 'video');
+    media.className = 'file-media';
+    media.src = file.content;
+    media.alt = file.name;
+    if (file.type === 'video') {
+      media.controls = true;
+      media.preload = 'metadata';
+    }
+    preview.appendChild(media);
+  }
+  renderFiles();
+}
+
+function showFileForm() {
+  pendingMedia = null;
+  const form = document.querySelector('#fileForm');
+  form.reset();
+  document.querySelector('#fileName').value = 'untitled.txt';
+  document.querySelector('#fileType').value = 'text';
+  updateFileFormType();
+  form.classList.remove('hidden');
+  document.querySelector('#fileName').focus();
+}
+
+function updateFileFormType() {
+  const isText = document.querySelector('#fileType').value === 'text';
+  document.querySelector('#fileUploadLabel').classList.toggle('hidden', isText);
+  document.querySelector('#fileContentLabel').classList.toggle('hidden', !isText);
+  if (!isText) document.querySelector('#fileUpload').value = '';
+}
+
+function closeFileForm() {
+  pendingMedia = null;
+  document.querySelector('#fileForm').classList.add('hidden');
+}
+
+function createFile(event) {
+  event.preventDefault();
+  const type = document.querySelector('#fileType').value;
+  const name = document.querySelector('#fileName').value.trim() || `untitled.${type === 'text' ? 'txt' : type}`;
+  let content = document.querySelector('#fileContent').value;
+  let mime = 'text/plain';
+  let size = new Blob([content]).size;
+  if (type !== 'text') {
+    if (!pendingMedia) {
+      setFilesStatus('Choose an image or video before saving.', true);
+      return;
+    }
+    content = pendingMedia.content;
+    mime = pendingMedia.mime;
+    size = pendingMedia.size;
+  }
+  const newFile = { id: `file-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, name, type, mime, content, size, updatedAt: Date.now() };
+  files.push(newFile);
+  if (!saveFiles()) {
+    files.pop();
+    return;
+  }
+  closeFileForm();
+  setFilesStatus(`${name} saved.`);
+  openFile(newFile.id);
+}
+
+function readMediaFile(file) {
+  if (!file || !['image/', 'video/'].some((prefix) => file.type.startsWith(prefix))) {
+    setFilesStatus('Please choose an image or video file.', true);
+    return;
+  }
+  const reader = new FileReader();
+  reader.addEventListener('load', () => {
+    pendingMedia = { content: reader.result, mime: file.type, size: file.size };
+    setFilesStatus(`${file.name} ready to save.`);
+  });
+  reader.addEventListener('error', () => setFilesStatus('Could not read that media file.', true));
+  reader.readAsDataURL(file);
+}
+
+function deleteFile() {
+  const file = files.find((item) => item.id === activeFileId);
+  if (!file) return;
+  files = files.filter((item) => item.id !== activeFileId);
+  if (!saveFiles()) {
+    files.push(file);
+    return;
+  }
+  clearFileDetail();
+  setFilesStatus(`${file.name} deleted.`);
+}
+
+function saveOpenTextFile() {
+  const file = files.find((item) => item.id === activeFileId);
+  const editor = document.querySelector('.file-open-editor');
+  if (!file || !editor) return;
+  const previousContent = file.content;
+  file.content = editor.value;
+  file.size = new Blob([file.content]).size;
+  file.updatedAt = Date.now();
+  if (!saveFiles()) {
+    file.content = previousContent;
+    return;
+  }
+  setFilesStatus(`${file.name} updated.`);
+  renderFiles();
+}
+
+function initFiles() {
+  renderFiles();
+  document.querySelector('#newFile').addEventListener('click', showFileForm);
+  document.querySelector('#cancelFile').addEventListener('click', closeFileForm);
+  document.querySelector('#refreshFiles').addEventListener('click', () => { files = loadFiles(); renderFiles(); setFilesStatus('File list refreshed.'); });
+  document.querySelector('#fileType').addEventListener('change', updateFileFormType);
+  document.querySelector('#fileUpload').addEventListener('change', (event) => readMediaFile(event.target.files[0]));
+  document.querySelector('#fileForm').addEventListener('submit', createFile);
+  document.querySelector('#filesList').addEventListener('click', (event) => {
+    const item = event.target.closest('[data-file-id]');
+    if (item) openFile(item.dataset.fileId);
+  });
+  document.querySelector('#filePreview').addEventListener('click', (event) => {
+    if (event.target.closest('.delete-file')) deleteFile();
+    if (event.target.closest('.save-open-file')) saveOpenTextFile();
+  });
 }
 
 function normalizeBrowserUrl(value) {
@@ -626,7 +857,9 @@ document.querySelectorAll('.map-pin').forEach((pin) => pin.addEventListener('cli
 
 createNoteTabs();
 renderNote();
+initFiles();
 initGame();
+initCursorTrail();
 document.querySelectorAll('.window').forEach(setupDragging);
 updateBrowserHistoryButtons();
 restoreDesktopBackground();

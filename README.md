@@ -24,6 +24,10 @@ The Atlas map interaction window
 
 System settings window
 
+Virtual Files file manager
+
+Create and edit text files, upload image and video files, and preview them inside the desktop
+
 Custom desktop colors, background presets, and image wallpapers
 
 Close the interface and return to the boot screen
@@ -67,6 +71,10 @@ Desktop background settings are saved in localStorage under the key:
 
 lumenBackground
 
+Virtual files are saved in localStorage under the key:
+
+lumenFiles
+
 Notes
 
 localStorage data is only saved in the current browser and under the current domain.
@@ -74,5 +82,7 @@ localStorage data is only saved in the current browser and under the current dom
 Clearing browser website data will delete saved notes and background settings.
 
 Image wallpapers require an image URL that the browser can access.
+
+Virtual files stay in the current browser and domain. Images and videos are stored as browser data and are limited by available localStorage capacity; they are not written to the computer's real file system.
 
 The project uses Google Fonts; fallback fonts are used automatically when there is no network.
