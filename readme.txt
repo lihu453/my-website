@@ -28,6 +28,10 @@ System settings window
 
 Browser app with address bar, navigation history, reload, and new-tab support
 
+Mini Runner game with jumping, obstacles, scoring, pause, and restart controls
+
+Mini Runner supports Space, Arrow Up, and a mobile jump button. The best score is saved locally.
+
 Custom desktop colors, background presets, and image wallpapers
 
 Close the interface and return to the boot screen
@@ -71,6 +75,10 @@ lumenNotes
 Desktop background settings are saved in localStorage under the key:
 
 lumenBackground
+
+Mini Runner's best score is saved under the key:
+
+lumenGameBest
 
 Notes
 
