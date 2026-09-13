@@ -4,6 +4,7 @@ const topbar = document.querySelector('#topbar');
 const defaultDesktopBackground = 'linear-gradient(135deg, #a8c7bd 0%, #c4d8be 52%, #e8e4be 100%)';
 let highestZ = 20;
 let dragState = null;
+let resizeState = null;
 let browserHistory = ['https://example.com'];
 let browserHistoryIndex = 0;
 
@@ -123,6 +124,7 @@ const game = {
   state: 'ready',
   animationId: null,
   lastTime: 0,
+  elapsedTime: 0,
   score: 0,
   best: loadGameBest(),
   speed: 260,
@@ -155,6 +157,7 @@ function updateGameScore() {
 
 function resetGame(showMessage = true) {
   game.state = 'ready';
+  game.elapsedTime = 0;
   game.score = 0;
   game.speed = 260;
   game.spawnTimer = 1.1;
@@ -208,9 +211,19 @@ function endGame() {
 }
 
 function spawnGameObstacle() {
-  const height = 25 + Math.random() * 32;
-  const width = 17 + Math.random() * 14;
-  game.obstacles.push({ x: 780, y: 245 - height, width, height });
+  const types = [
+    { name: 'spike', width: 22, height: 34 },
+    { name: 'block', width: 32, height: 27 },
+    { name: 'tower', width: 23, height: 55 },
+    { name: 'wide', width: 54, height: 25 }
+  ];
+  const type = types[Math.floor(Math.random() * types.length)];
+  const height = type.height + (type.name === 'tower' ? Math.random() * 10 : Math.random() * 8);
+  const width = type.width + (type.name === 'wide' ? Math.random() * 10 : Math.random() * 5);
+  game.obstacles.push({ name: type.name, x: 780, y: 245 - height, width, height });
+  if (type.name === 'spike' && Math.random() > 0.55) {
+    game.obstacles.push({ name: 'spike', x: 780 + width + 10, y: 211, width: 18, height: 34 });
+  }
 }
 
 function intersects(first, second) {
@@ -220,14 +233,15 @@ function intersects(first, second) {
 
 function updateGame(delta) {
   const groundY = 245 - game.player.height;
+  game.elapsedTime += delta;
   game.score += delta * 10;
-  game.speed = 260 + Math.min(game.score * 2.2, 240);
+  game.speed = Math.min(260 + game.elapsedTime * 10, 680);
   game.player.velocityY += 1500 * delta;
   game.player.y = Math.min(groundY, game.player.y + game.player.velocityY * delta);
   game.spawnTimer -= delta;
   if (game.spawnTimer <= 0) {
     spawnGameObstacle();
-    game.spawnTimer = Math.max(0.65, 1.35 - game.score / 500) + Math.random() * 0.55;
+    game.spawnTimer = Math.max(0.62, 1.45 - game.elapsedTime / 70) + Math.random() * 0.5;
   }
   game.obstacles.forEach((obstacle) => { obstacle.x -= game.speed * delta; });
   game.obstacles = game.obstacles.filter((obstacle) => obstacle.x + obstacle.width > -10);
@@ -267,9 +281,26 @@ function drawGame() {
   context.fillRect(player.x + 21, player.y + 5, 3, 3);
   game.obstacles.forEach((obstacle) => {
     context.fillStyle = '#ff8066';
-    context.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
     context.fillStyle = '#1b2927';
-    context.fillRect(obstacle.x + obstacle.width / 2 - 1, obstacle.y - 7, 2, 7);
+    if (obstacle.name === 'spike') {
+      context.beginPath();
+      context.moveTo(obstacle.x, 245);
+      context.lineTo(obstacle.x + obstacle.width / 2, obstacle.y);
+      context.lineTo(obstacle.x + obstacle.width, 245);
+      context.closePath();
+      context.fill();
+      context.fillStyle = '#ff8066';
+      context.fillRect(obstacle.x + obstacle.width / 2 - 2, obstacle.y + 10, 4, 4);
+    } else if (obstacle.name === 'wide') {
+      context.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+      context.fillStyle = '#ff8066';
+      context.fillRect(obstacle.x + 7, obstacle.y + 7, obstacle.width - 14, 3);
+    } else {
+      context.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+      context.fillStyle = '#ff8066';
+      context.fillRect(obstacle.x + 6, obstacle.y + 7, 4, 4);
+      if (obstacle.name === 'tower') context.fillRect(obstacle.x + obstacle.width - 10, obstacle.y + 19, 4, 4);
+    }
   });
 }
 
@@ -421,8 +452,84 @@ function navigateBrowser(value, addToHistory = true) {
 function setupDragging(element) {
   const handle = element.querySelector('[data-drag-handle]');
   if (!handle) return;
+  const resizeMargin = 9;
+
+  function getResizeEdges(event) {
+    const rect = element.getBoundingClientRect();
+    const nearLeft = event.clientX - rect.left <= resizeMargin;
+    const nearRight = rect.right - event.clientX <= resizeMargin;
+    const nearTop = event.clientY - rect.top <= resizeMargin;
+    const nearBottom = rect.bottom - event.clientY <= resizeMargin;
+    return { left: nearLeft, right: nearRight, top: nearTop, bottom: nearBottom };
+  }
+
+  function updateResizeCursor(event) {
+    if (resizeState && resizeState.element === element) return;
+    if (element.classList.contains('maximized') || element.classList.contains('fullscreen')) {
+      element.style.cursor = '';
+      return;
+    }
+    const edges = getResizeEdges(event);
+    const horizontal = edges.left || edges.right;
+    const vertical = edges.top || edges.bottom;
+    element.style.cursor = horizontal && vertical ? (edges.left === edges.top ? 'nwse-resize' : 'nesw-resize') : horizontal ? 'ew-resize' : vertical ? 'ns-resize' : '';
+  }
+
+  element.addEventListener('pointermove', (event) => {
+    if (!resizeState || resizeState.element !== element) {
+      updateResizeCursor(event);
+      return;
+    }
+    const { startX, startY, startWidth, startHeight, startLeft, startTop, edges } = resizeState;
+    const minWidth = Math.min(280, window.innerWidth - 32);
+    const minHeight = 180;
+    let width = startWidth;
+    let height = startHeight;
+    let left = startLeft;
+    let top = startTop;
+    if (edges.right) width = Math.max(minWidth, startWidth + event.clientX - startX);
+    if (edges.bottom) height = Math.max(minHeight, startHeight + event.clientY - startY);
+    if (edges.left) {
+      left = Math.min(startLeft + startWidth - minWidth, event.clientX);
+      width = Math.max(minWidth, startWidth + startLeft - left);
+    }
+    if (edges.top) {
+      top = Math.min(startTop + startHeight - minHeight, event.clientY);
+      height = Math.max(minHeight, startHeight + startTop - top);
+    }
+    const maxRight = window.innerWidth - 8;
+    const maxBottom = window.innerHeight - 70;
+    if (left < 8) { width -= 8 - left; left = 8; }
+    if (top < 66) { height -= 66 - top; top = 66; }
+    if (left + width > maxRight) width = maxRight - left;
+    if (top + height > maxBottom) height = maxBottom - top;
+    element.style.left = `${left}px`;
+    element.style.top = `${top}px`;
+    element.style.width = `${Math.max(minWidth, width)}px`;
+    element.style.height = `${Math.max(minHeight, height)}px`;
+  });
+
+  element.addEventListener('pointerdown', (event) => {
+    if (event.target.closest('button, input, textarea, select') || element.classList.contains('maximized') || element.classList.contains('fullscreen')) return;
+    const edges = getResizeEdges(event);
+    if (!edges.left && !edges.right && !edges.top && !edges.bottom) return;
+    const rect = element.getBoundingClientRect();
+    resizeState = { element, startX: event.clientX, startY: event.clientY, startWidth: rect.width, startHeight: rect.height, startLeft: rect.left, startTop: rect.top, edges };
+    bringToFront(element);
+    element.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  });
+
+  function stopResizing() {
+    if (resizeState && resizeState.element === element) resizeState = null;
+  }
+
+  element.addEventListener('pointerup', stopResizing);
+  element.addEventListener('pointercancel', stopResizing);
+  element.addEventListener('lostpointercapture', stopResizing);
   handle.addEventListener('pointerdown', (event) => {
     if (event.target.closest('button')) return;
+    if (getResizeEdges(event).left || getResizeEdges(event).right || getResizeEdges(event).top || getResizeEdges(event).bottom) return;
     const rect = element.getBoundingClientRect();
     dragState = { element, offsetX: event.clientX - rect.left, offsetY: event.clientY - rect.top };
     bringToFront(element);
