@@ -19,10 +19,6 @@
 
   <main class="desktop hidden" id="desktop">
     <header class="topbar" id="topbar">
-      <button class="brand-button" id="welcomeOpen" aria-label="Open welcome window">
-        <span class="brand-symbol">L</span>
-        <span>LumenOS</span>
-      </button>
       <div class="topbar-center"><span class="topbar-pulse"></span> quiet mode / exploring</div>
       <div class="topbar-right"><button class="system-button" id="systemOpen" aria-label="Open system settings">SYS</button><span id="dateText">SAT, SEP 12</span><span class="clock" id="timeText">00:00</span></div>
     </header>
@@ -41,10 +37,6 @@
       <button class="app-icon" data-open="aboutWindow">
         <span class="icon-tile about-tile"><span>?</span></span>
         <span class="app-name">About.me</span><span class="app-meta">identity / 01</span>
-      </button>
-      <button class="app-icon" data-open="atlasWindow">
-        <span class="icon-tile atlas-tile"><span class="atlas-cross"></span></span>
-        <span class="app-name">The Atlas</span><span class="app-meta">places / 04</span>
       </button>
       <button class="app-icon" data-open="systemWindow">
         <span class="icon-tile system-tile"><span>+</span></span>
@@ -66,20 +58,6 @@
 
     <div class="desktop-footer"><span>v1.0.3</span><span>memory is a medium</span><span>scroll to wander</span></div>
 
-    <div class="window welcome-window" id="welcomeWindow" style="top: 18%; left: 32%;">
-      <div class="window-header" data-drag-handle>
-        <div class="window-controls"><button class="window-control close" data-close="welcomeWindow" aria-label="Close window"></button><button class="window-control minimize" data-minimize="welcomeWindow" aria-label="Minimize window"></button><button class="window-control maximize" data-maximize="welcomeWindow" aria-label="Maximize window"></button><button class="window-control fullscreen" data-fullscreen="welcomeWindow" aria-label="Enter fullscreen window">+</button></div>
-        <span class="window-title">welcome.txt</span><span class="window-index">01</span>
-      </div>
-      <div class="window-body welcome-body">
-        <p class="eyebrow">A NOTE FROM THE DESK</p>
-        <h3>Hi, I'm building<br><em>in public.</em></h3>
-        <p class="body-copy">LumenOS is the little corner of the internet where I collect unfinished thoughts, tiny experiments, and the coordinates of places that changed my mind.</p>
-        <div class="welcome-stats"><div><strong>03</strong><span>open threads</span></div><div><strong>∞</strong><span>directions</span></div><div><strong>01</strong><span>good question</span></div></div>
-        <button class="text-button" data-open="fieldNotes">Open the field notes <span>&rarr;</span></button>
-      </div>
-    </div>
-
     <div class="window notes-window" id="fieldNotes" style="top: 13%; left: 13%; display: none;">
       <div class="window-header" data-drag-handle><div class="window-controls"><button class="window-control close" data-close="fieldNotes" aria-label="Close window"></button><button class="window-control minimize" data-minimize="fieldNotes" aria-label="Minimize window"></button><button class="window-control maximize" data-maximize="fieldNotes" aria-label="Maximize window"></button><button class="window-control fullscreen" data-fullscreen="fieldNotes" aria-label="Enter fullscreen window">+</button></div><span class="window-title">field-notes.app</span><span class="window-index">03</span></div>
       <div class="window-body notes-layout"><nav class="notes-sidebar" id="notesList"></nav><article class="note-reader"><div class="note-kicker" id="noteKicker">01 / OBSERVATION</div><input class="note-title-input" id="noteTitle" aria-label="Note title" placeholder="Untitled note"><p class="note-date" id="noteDate"></p><textarea class="note-editor" id="noteEditor" aria-label="Note content" placeholder="Start writing..."></textarea><div class="note-footer"><div class="note-actions"><button class="mini-action" id="newNote">+ new</button><button class="mini-action save-action" id="saveNote">save</button><button class="mini-action delete-action" id="deleteNote">delete</button></div><button class="mini-action" id="randomNote">shuffle &rarr;</button></div></article></div>
@@ -88,11 +66,6 @@
     <div class="window about-window" id="aboutWindow" style="top: 25%; left: 56%; display: none;">
       <div class="window-header" data-drag-handle><div class="window-controls"><button class="window-control close" data-close="aboutWindow" aria-label="Close window"></button><button class="window-control minimize" data-minimize="aboutWindow" aria-label="Minimize window"></button><button class="window-control maximize" data-maximize="aboutWindow" aria-label="Maximize window"></button><button class="window-control fullscreen" data-fullscreen="aboutWindow" aria-label="Enter fullscreen window">+</button></div><span class="window-title">about.me</span><span class="window-index">01</span></div>
       <div class="window-body about-body"><div class="about-stamp">L / 2026</div><p class="eyebrow">A HUMAN, IN PROGRESS</p><h3>Curious by default.<br><em>Careful with attention.</em></h3><p class="body-copy">I like making interfaces that feel like places. I believe good software leaves enough silence for a person to think.</p><div class="tag-row"><span>design</span><span>code</span><span>long walks</span><span>tea</span></div><div class="about-links"><a href="https://github.com" target="_blank" rel="noreferrer">GitHub <span>&nearr;</span></a><a href="mailto:hello@example.com">Say hello <span>&nearr;</span></a></div></div>
-    </div>
-
-    <div class="window atlas-window" id="atlasWindow" style="top: 20%; left: 39%; display: none;">
-      <div class="window-header" data-drag-handle><div class="window-controls"><button class="window-control close" data-close="atlasWindow" aria-label="Close window"></button><button class="window-control minimize" data-minimize="atlasWindow" aria-label="Minimize window"></button><button class="window-control maximize" data-maximize="atlasWindow" aria-label="Maximize window"></button><button class="window-control fullscreen" data-fullscreen="atlasWindow" aria-label="Enter fullscreen window">+</button></div><span class="window-title">the-atlas.map</span><span class="window-index">04</span></div>
-      <div class="window-body atlas-body"><div class="map-grid"><div class="map-route route-one"></div><div class="map-route route-two"></div><button class="map-pin pin-one" data-place="Reykjavik"><span></span></button><button class="map-pin pin-two" data-place="Kyoto"><span></span></button><button class="map-pin pin-three" data-place="Home, for now"><span></span></button><div class="map-label label-one">REYKJAVIK</div><div class="map-label label-two">KYOTO</div><div class="map-label label-three">HOME, FOR NOW</div></div><div class="atlas-caption"><p class="eyebrow">PLACES THAT STAY</p><h3 id="placeTitle">Click a pin.</h3><p id="placeCopy">Some coordinates are geographical. The important ones are emotional.</p></div></div>
     </div>
 
     <div class="window system-window" id="systemWindow" style="top: 16%; left: 55%; display: none;">
@@ -142,7 +115,7 @@
       </div>
     </div>
 
-    <aside class="dock" aria-label="Quick launch"><button data-open="welcomeWindow" class="dock-item active"><span class="dock-glyph">L</span><span>home</span></button><button data-open="fieldNotes" class="dock-item"><span class="dock-glyph">&equiv;</span><span>notes</span></button><button data-open="aboutWindow" class="dock-item"><span class="dock-glyph">?</span><span>about</span></button><button data-open="atlasWindow" class="dock-item"><span class="dock-glyph">+</span><span>atlas</span></button><button data-open="systemWindow" class="dock-item"><span class="dock-glyph">&#9881;</span><span>system</span></button><button data-open="browserWindow" class="dock-item"><span class="dock-glyph">&bull;</span><span>browser</span></button><button data-open="gamesWindow" class="dock-item"><span class="dock-glyph">RUN</span><span>play</span></button><button data-open="filesWindow" class="dock-item"><span class="dock-glyph">[]</span><span>files</span></button></aside>
+    <aside class="dock" aria-label="Quick launch"><button data-open="fieldNotes" class="dock-item"><span class="dock-glyph">&equiv;</span><span>notes</span></button><button data-open="aboutWindow" class="dock-item"><span class="dock-glyph">?</span><span>about</span></button><button data-open="systemWindow" class="dock-item"><span class="dock-glyph">&#9881;</span><span>system</span></button><button data-open="browserWindow" class="dock-item"><span class="dock-glyph">&bull;</span><span>browser</span></button><button data-open="gamesWindow" class="dock-item"><span class="dock-glyph">RUN</span><span>play</span></button><button data-open="filesWindow" class="dock-item"><span class="dock-glyph">[]</span><span>files</span></button></aside>
   </main>
   <script src="script.js"></script>
 </body>
