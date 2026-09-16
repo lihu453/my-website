@@ -780,10 +780,9 @@ function setupDragging(element) {
 document.querySelector('#enterButton').addEventListener('click', () => {
   bootScreen.classList.add('hidden');
   desktop.classList.remove('hidden');
-  openWindow('welcomeWindow');
 });
 
-document.querySelector('#welcomeOpen').addEventListener('click', () => openWindow('welcomeWindow'));
+
 document.querySelector('#systemOpen').addEventListener('click', () => openWindow('systemWindow'));
 document.querySelectorAll('[data-open]').forEach((button) => button.addEventListener('click', () => openWindow(button.dataset.open)));
 document.querySelectorAll('[data-close]').forEach((button) => button.addEventListener('click', () => closeWindow(button.dataset.close)));
