@@ -190,26 +190,6 @@ h3 em,
   font: 11px 'IBM Plex Mono', monospace;
 }
 
-.brand-button {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  background: transparent;
-  font-weight: 500;
-  letter-spacing: .03em;
-}
-
-.brand-symbol {
-  width: 25px;
-  height: 25px;
-  display: grid;
-  place-items: center;
-  background: var(--soot);
-  color: var(--zest);
-  font-family: Georgia, serif;
-  font-size: 17px;
-}
-
 .topbar-center { color: var(--ash); display: flex; gap: 9px; align-items: center; }
 .topbar-right { display: flex; gap: 20px; color: var(--ash); }
 .clock { color: var(--soot); }
@@ -289,17 +269,6 @@ h3 em,
 
 .about-tile { font: 28px Georgia, serif; background: var(--zest); color: var(--soot); }
 
-.atlas-tile { background: #7f9481; position: relative; }
-.atlas-cross,
-.atlas-cross:after {
-  content: '';
-  width: 23px;
-  height: 1px;
-  background: var(--bone);
-  display: block;
-}
-.atlas-cross:after { transform: rotate(90deg); }
-
 .app-name { font-weight: 700; font-size: 12px; align-self: end; }
 .app-meta { font: 9px 'IBM Plex Mono', monospace; color: var(--ash); align-self: start; }
 
@@ -366,18 +335,7 @@ h3 em,
 
 .body-copy { max-width: 400px; font-size: 14px; line-height: 1.7; color: #5c4f46; }
 
-.welcome-body { min-height: 360px; }
-.welcome-stats {
-  display: flex;
-  gap: 35px;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  padding: 18px 0;
-  margin: 30px 0 24px;
-}
-.welcome-stats div { display: flex; flex-direction: column; gap: 5px; }
-.welcome-stats strong { font: 22px 'IBM Plex Mono', monospace; }
-.welcome-stats span, .note-footer {
+.note-footer {
   font: 9px 'IBM Plex Mono', monospace;
   color: var(--ash);
   text-transform: uppercase;
@@ -482,54 +440,6 @@ h3 em,
 }
 .about-links a { text-decoration: none; color: var(--soot); font: 11px 'IBM Plex Mono', monospace; }
 .about-links a span { color: var(--flame); }
-
-/* ---------- atlas ---------- */
-.atlas-window { width: min(650px, calc(100vw - 32px)); }
-.atlas-body { padding: 0; }
-.map-grid {
-  height: 310px;
-  background: #d8d5c0;
-  position: relative;
-  overflow: hidden;
-  background-image:
-    linear-gradient(45deg, rgba(43,35,32,.08) 25%, transparent 25%, transparent 75%, rgba(43,35,32,.08) 75%),
-    linear-gradient(45deg, rgba(43,35,32,.08) 25%, transparent 25%, transparent 75%, rgba(43,35,32,.08) 75%);
-  background-position: 0 0, 12px 12px;
-  background-size: 24px 24px;
-}
-.map-route { position: absolute; height: 1px; background: var(--flame); transform-origin: left; }
-.route-one { width: 270px; top: 105px; left: 130px; transform: rotate(25deg); }
-.route-two { width: 220px; top: 180px; left: 290px; transform: rotate(-35deg); }
-
-.map-pin {
-  position: absolute;
-  width: 18px;
-  height: 18px;
-  background: var(--soot);
-  border: 3px solid var(--bone);
-  border-radius: 50%;
-  padding: 0;
-  z-index: 2;
-}
-.map-pin span {
-  position: absolute;
-  inset: -7px;
-  border: 1px solid var(--flame);
-  border-radius: 50%;
-  animation: pulse 2s infinite;
-}
-.pin-one { top: 84px; left: 117px; }
-.pin-two { top: 205px; left: 490px; }
-.pin-three { top: 175px; left: 277px; }
-
-.map-label { position: absolute; font: 9px 'IBM Plex Mono', monospace; color: #6f6952; }
-.label-one { top: 70px; left: 112px; }
-.label-two { top: 230px; left: 485px; }
-.label-three { top: 196px; left: 285px; }
-
-.atlas-caption { padding: 28px 32px 32px; }
-.atlas-caption h3 { margin-bottom: 10px; }
-.atlas-caption p:last-child { font-size: 13px; color: var(--ash); }
 
 /* ---------- dock ---------- */
 .dock {
@@ -1086,12 +996,10 @@ h3 em,
   .note-tab { padding: 12px 10px; }
   .note-reader { padding: 22px 17px; }
   .notes-window { top: 80px; left: 16px; }
-  .welcome-window, .about-window, .atlas-window { top: 90px; left: 16px; }
-  .welcome-stats { gap: 17px; }
+  .about-window { top: 90px; left: 16px; }
   .desktop-footer { bottom: 100px; font-size: 8px; }
   .desktop-footer span:nth-child(2) { display: none; }
   .dock { bottom: 16px; }
-  .map-grid { height: 250px; transform: scale(.95); transform-origin: top left; width: 105%; }
 
   .browser-toolbar { flex-wrap: wrap; }
   .browser-toolbar input { order: 2; flex-basis: calc(100% - 76px); }
