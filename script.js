@@ -782,7 +782,6 @@ document.querySelector('#enterButton').addEventListener('click', () => {
   desktop.classList.remove('hidden');
 });
 
-
 document.querySelector('#systemOpen').addEventListener('click', () => openWindow('systemWindow'));
 document.querySelectorAll('[data-open]').forEach((button) => button.addEventListener('click', () => openWindow(button.dataset.open)));
 document.querySelectorAll('[data-close]').forEach((button) => button.addEventListener('click', () => closeWindow(button.dataset.close)));
@@ -847,11 +846,6 @@ document.querySelector('#shutdownButton').addEventListener('click', returnToBoot
 document.querySelectorAll('.title-letter').forEach((letter) => letter.addEventListener('click', (event) => {
   event.stopPropagation();
   letter.classList.add('fallen');
-}));
-document.querySelectorAll('.map-pin').forEach((pin) => pin.addEventListener('click', () => {
-  const place = pin.dataset.place;
-  document.querySelector('#placeTitle').textContent = place;
-  document.querySelector('#placeCopy').textContent = place === 'Kyoto' ? 'A lesson in making the ordinary feel ceremonial.' : place === 'Reykjavik' ? 'A reminder that quiet can have a horizon.' : 'The place where the next version starts.';
 }));
 
 createNoteTabs();
