@@ -1,88 +1,61 @@
-LumenOS
-=======
+# LumenOS
 
-A personal web operating system built with HTML, CSS, and JavaScript.
-It organizes personal introduction, notes, places, and desktop settings into an explorable interface.
 
-Features
 
-Welcome boot screen
+LumenOS is a small personal web desktop I built with plain HTML, CSS, and JavaScript. It's a place for my intro, notes, places, and desktop settings, wrapped in a clickable little interface. No frameworks, no build step.
 
-Desktop top bar and live date/time
+## What it does
 
-App windows that can be opened, closed, minimized, and dragged
+- Starts with a boot screen.
+- Top bar with a live date/time.
+- App windows you can open, close, minimize, and drag around.
+- **Field Notes**: a small notes app. You can open, create, edit, save, and delete notes. They're stored in `localStorage`, so they survive a refresh.
+- **About.me**: personal intro window.
+- **The Atlas**: map interaction window.
+- **System Settings**: desktop colors, background presets, and image wallpapers.
+- **Virtual Files**: a tiny file manager. Create/edit text files, upload images/videos, and preview them inside the desktop.
+- You can close the whole interface and go back to the boot screen.
+- Click the big LumenOS letters on the desktop and they fall. Opening an app puts them back.
+- Desktop and mobile layouts are supported.
 
-Field Notes notes app
+## Running it
 
-Open, edit, create, save, and delete notes
+It's just static files. From the project root:
 
-Notes are saved to browser localStorage and persist after refresh
-
-About.me personal introduction window
-
-The Atlas map interaction window
-
-System settings window
-
-Virtual Files file manager
-
-Create and edit text files, upload image and video files, and preview them inside the desktop
-
-Custom desktop colors, background presets, and image wallpapers
-
-Close the interface and return to the boot screen
-
-Click characters in the large desktop title, and the characters fall
-
-When an app is opened, the title characters return to their original positions
-
-Supports desktop and mobile layouts
-
-Run
-
-The project is a static website and requires no dependencies to install.
-
-Run in the project root directory:
-
+```bash
 python -m http.server 4173
+```
 
-Then visit in your browser:
+Then open:
 
+```
 http://localhost:4173/
+```
 
-You can also open index.html directly.
+You can also open `index.html` directly. There's a hosted copy here:
 
-You can also open https://lihu453.github.io/my-website/
+https://lihu453.github.io/my-website/
 
-File Structure
+## Files
 
-index.html Page structure and app windows
-style.css Page styles, animations, and responsive layout
-script.js Clock, windows, dragging, notes, and background settings logic
-readme.txt Project description
+- `index.html` — page structure and app windows
+- `style.css` — styles, animations, responsive layout
+- `script.js` — clock, windows, dragging, notes, background settings, etc.
+- `readme.txt` — project description
 
-Note Data
+## Where data lives
 
-Note data is saved in the browser's localStorage under the key:
+Saved in `localStorage` under these keys:
 
-lumenNotes
+- Notes: `lumenNotes`
+- Desktop background: `lumenBackground`
+- Virtual files: `lumenFiles`
 
-Desktop background settings are saved in localStorage under the key:
+## A few things to know
 
-lumenBackground
+- `localStorage` is per browser and per domain. If you clear site data, your notes, background, and virtual files are gone.
+- Image wallpapers need to be a URL the browser can actually load.
+- Virtual Files are not real files on your computer. Images and videos are stored as browser data and limited by `localStorage`, so don't throw huge videos in there.
+- The project uses Google Fonts. If you're offline, it falls back to system fonts.
 
-Virtual files are saved in localStorage under the key:
-
-lumenFiles
-
-Notes
-
-localStorage data is only saved in the current browser and under the current domain.
-
-Clearing browser website data will delete saved notes and background settings.
-
-Image wallpapers require an image URL that the browser can access.
-
-Virtual files stay in the current browser and domain. Images and videos are stored as browser data and are limited by available localStorage capacity; they are not written to the computer's real file system.
-
-The project uses Google Fonts; fallback fonts are used automatically when there is no network.
+It's a personal project, so there are probably a few rough edges.
